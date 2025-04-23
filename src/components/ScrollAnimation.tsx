@@ -1,53 +1,53 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from "react";
 
 interface ScrollAnimationProps {
   children: React.ReactNode;
-  threshold?: number;
-  delay?: number;
+  threshold?: number; // Порог видимости (от 0 до 1)
+  className?: string;
+  delay?: number; // Задержка анимации в мс
 }
 
-const ScrollAnimation = ({ 
+const ScrollAnimation: React.FC<ScrollAnimationProps> = ({ 
   children, 
   threshold = 0.1,
-  delay = 0 
-}: ScrollAnimationProps) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
+  className = "",
+  delay = 0
+}) => {
+  const elementRef = useRef<HTMLDivElement>(null);
+  
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setTimeout(() => {
-            setIsVisible(true);
-          }, delay);
-          
-          // Once visible, no need to observe anymore
-          if (ref.current) {
-            observer.unobserve(ref.current);
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setTimeout(() => {
+              entry.target.classList.add("visible");
+            }, delay);
+            
+            observer.unobserve(entry.target);
           }
-        }
+        });
       },
       { threshold }
     );
-
-    const currentRef = ref.current;
-    if (currentRef) {
-      observer.observe(currentRef);
+    
+    const element = elementRef.current;
+    
+    if (element) {
+      observer.observe(element);
     }
-
+    
     return () => {
-      if (currentRef) {
-        observer.unobserve(currentRef);
+      if (element) {
+        observer.unobserve(element);
       }
     };
   }, [threshold, delay]);
-
+  
   return (
     <div 
-      ref={ref} 
-      className={`animate-on-scroll ${isVisible ? 'visible' : ''}`}
-      style={{ transitionDelay: `${delay}ms` }}
+      ref={elementRef} 
+      className={`animate-on-scroll ${className}`}
     >
       {children}
     </div>
